@@ -1,0 +1,22 @@
+{
+  "name": "discord-ticket-bot",
+  "version": "1.0.0",
+  "description": "Bot de tickets para Discord con categorías, prioridad y feedback",
+  "main": "bot.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "tickets",
+    "discordjs"
+  ],
+  "author": "vSergiors",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5"
+  }
+}
