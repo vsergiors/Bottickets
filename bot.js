@@ -9,16 +9,18 @@ ButtonBuilder,
 ButtonStyle,
 ChannelType,
 PermissionFlagsBits,
-EmbedBuilder
+EmbedBuilder,
+REST,
+Routes,
+SlashCommandBuilder
 } = require("discord.js");
 
 const client = new Client({
 intents: [GatewayIntentBits.Guilds]
 });
 
-const ADMIN_ROLE = "Admin"; 
-const TICKET_CATEGORY = "TICKETS"; 
-const LOG_CHANNEL = "mod-logs";
+const ADMIN_ROLE = "Admin";
+const LOG_CHANNEL = "feedback-tickets";
 
 const categorias = [
 { label: "Soporte", value: "soporte" },
@@ -27,8 +29,31 @@ const categorias = [
 { label: "Otro", value: "otro" }
 ];
 
-client.once("ready", () => {
+client.once("ready", async () => {
+
 console.log(`Bot listo como ${client.user.tag}`);
+
+const commands = [
+new SlashCommandBuilder()
+.setName("panel")
+.setDescription("Enviar panel de tickets")
+].map(c => c.toJSON());
+
+const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+
+try {
+
+await rest.put(
+Routes.applicationCommands(client.user.id),
+{ body: commands }
+);
+
+console.log("Slash command /panel registrado");
+
+} catch (err) {
+console.error(err);
+}
+
 });
 
 client.on("interactionCreate", async (interaction) => {
@@ -45,9 +70,10 @@ const menu = new StringSelectMenuBuilder()
 const row = new ActionRowBuilder().addComponents(menu);
 
 await interaction.reply({
-content: "🎫 Selecciona la categoría del ticket",
+content: "🎫 **Sistema de Tickets**\nSelecciona la categoría:",
 components: [row]
 });
+
 }
 
 }
@@ -70,7 +96,7 @@ const prioridadMenu = new StringSelectMenuBuilder()
 const row = new ActionRowBuilder().addComponents(prioridadMenu);
 
 await interaction.reply({
-content: "Selecciona la importancia",
+content: "Selecciona la importancia del ticket",
 components: [row],
 ephemeral: true
 });
@@ -89,7 +115,7 @@ if (prioridad == 3) emoji = "🔴";
 const guild = interaction.guild;
 
 const canal = await guild.channels.create({
-name: `${categoria}-${interaction.user.username}`,
+name: `${emoji}-${categoria}-${interaction.user.username}`,
 type: ChannelType.GuildText,
 permissionOverwrites: [
 {
@@ -134,7 +160,10 @@ if (interaction.isButton()) {
 const member = interaction.member;
 
 if (!member.roles.cache.some(r => r.name === ADMIN_ROLE)) {
-return interaction.reply({content:"Solo admins",ephemeral:true});
+return interaction.reply({
+content: "Solo admins pueden usar esto",
+ephemeral: true
+});
 }
 
 if (interaction.customId === "reclamar") {
@@ -149,33 +178,39 @@ await interaction.reply("Ticket cerrado. Enviando formulario...");
 
 const canal = interaction.channel;
 
-await canal.send("Valora el soporte del 1 al 5 y escribe un comentario:");
+await canal.send("Escribe una valoración del **1 al 5** y un comentario:");
 
 const filter = m => m.author.id === interaction.user.id;
 
 const collected = await canal.awaitMessages({
 filter,
-max:1,
-time:120000
+max: 1,
+time: 120000
 });
+
+if (!collected.first()) return;
 
 const respuesta = collected.first().content;
 
-const log = interaction.guild.channels.cache.find(c=>c.name===LOG_CHANNEL);
+const log = interaction.guild.channels.cache.find(
+c => c.name === LOG_CHANNEL
+);
 
 if (log) {
 
 const embed = new EmbedBuilder()
-.setTitle("Nuevo feedback ticket")
+.setTitle("Feedback de Ticket")
 .setDescription(respuesta)
 .setColor("Green")
-.setFooter({text:`Usuario: ${interaction.user.tag}`});
+.setFooter({
+text: `Usuario: ${interaction.user.tag}`
+});
 
-log.send({embeds:[embed]});
+log.send({ embeds: [embed] });
 
 }
 
-setTimeout(()=>canal.delete(),5000);
+setTimeout(() => canal.delete(), 5000);
 
 }
 
