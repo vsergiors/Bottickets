@@ -20,7 +20,7 @@ intents: [GatewayIntentBits.Guilds]
 });
 
 const ADMIN_ROLE = "Admin";
-const LOG_CHANNEL = "feedback-tickets";
+const LOG_CHANNEL = "mod-logs";
 
 const categorias = [
 { label: "Soporte", value: "soporte" },
